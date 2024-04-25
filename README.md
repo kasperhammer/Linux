@@ -77,8 +77,8 @@ Kald funktionen: Brug GetLocalIp()-funktionen i din kode, hvor du har brug for a
 
 char *ipAddress = GetLocalIp();
 printf("Local IP Address: %s\n", ipAddress);
-free(ipAddress); // Husk at frigøre hukommelsen efter brug```
-
+free(ipAddress); // Husk at frigøre hukommelsen efter brug
+```
 Kompilér kildefilerne: Når du kompilerer dit projekt, skal du sikre dig, at IpGet.c er inkluderet i kommandoen.
 ## Bemærkninger
 Funktionen GetLocalIp() kan returnere NULL, hvis der opstår en fejl under hentning af IP-adressen. Det anbefales at kontrollere for NULL-værdien, når du bruger funktionen for at undgå uønskede fejl.
@@ -123,7 +123,8 @@ Brug MQTT-funktioner: Brug de forskellige MQTT-funktioner som f.eks. publish_mes
 Afslut MQTT-forbindelse: Når du er færdig med at bruge MQTT, skal du frigøre ressourcerne ved at kalde DestroyMQTT().
 
 
-DestroyMQTT(mosq1);```
+DestroyMQTT(mosq1);
+```
 
 ## Bemærkninger
 Før du bruger MQTT-funktionerne, skal du sørge for at have inkluderet mosquitto.h og have konfigureret dit projekt til at linke med Mosquitto-biblioteket.
@@ -204,7 +205,8 @@ Initialisér sensor: Kald init()-funktionen for at initialisere MCP9808-sensoren
 double temperature = init();
 Aflæs temperatur: Brug GetTemp()-funktionen til at få den aktuelle temperatur som en streng.
 
-char *temperatureString = GetTemp();```
+char *temperatureString = GetTemp();
+```
 
 ## Bemærkninger
 Sørg for at have de nødvendige tilladelser til at bruge I2C-bussen, og at sensoren er tilsluttet korrekt til din enhed.
