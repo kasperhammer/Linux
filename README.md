@@ -173,8 +173,8 @@ SetColor(0); // Blå baggrund
 Vis på skærmen: Brug WriteTopLine() og WriteBottomLine() til at skrive tekst på henholdsvis øverste og nederste linje af skærmen.
 
 WriteTopLine("Temperature:");
-WriteBottomLine("25°C"); ```
-
+WriteBottomLine("25°C"); 
+```
 ## Bemærkninger
 Sørg for at have de nødvendige tilladelser til at bruge I2C-bussen, og at skærmen er tilsluttet korrekt til din enhed.
 Funktionerne i screen.c-filen kan tilpasses efter behov, f.eks. for at ændre skærmens konfigurationer eller tilføje yderligere visningsmuligheder.
