@@ -50,7 +50,8 @@ sudo systemctl daemon-reload
 Aktivér og start servicen: Aktivér og start den nye service.
 
 sudo systemctl enable startup.service
-sudo systemctl start startup.service ```
+sudo systemctl start startup.service 
+```
 
 Nu vil StartUpService køre som en daemon ved systemets opstart og fortsætte med at køre i baggrunden, indsamle tid og temperaturinformation, opdatere skærmen og offentliggøre temperaturinformation til MQTT-brokeren.
 
