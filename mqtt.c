@@ -17,10 +17,12 @@
 
 int number;
 
-void publish_message(struct mosquitto *mosq, const char *topic, const char *payload, int qos) {
-    int rc = mosquitto_publish(mosq, NULL, "Mads/celcius", strlen(payload), payload, qos, true);
+void publish_message(struct mosquitto *mosq, const char *payload) {
+    int rc = mosquitto_publish(mosq, NULL, "KasperHammer/celcius", strlen(payload), payload, 2, true);
     if (rc != MOSQ_ERR_SUCCESS) {
         fprintf(stderr, "Failed to publish message: %s\n", mosquitto_strerror(rc));
+    }else{
+           printf("I Was a sucess \n");
     }
 }
 
@@ -67,7 +69,7 @@ void on_message1(struct mosquitto *mosq, void *obj, const struct mosquitto_messa
 
 
 
-int InitMqtt()
+struct mosquitto* GetMqtt()
 {
     struct mosquitto *mosq1;
     int version[3];
@@ -80,19 +82,36 @@ int InitMqtt()
     mosq1 = mosquitto_new(NULL, true, NULL);
 
 
+
+    return mosq1;
+}
+
+int DestroyMQTT(struct mosquitto *mosq1)
+{
+    mosquitto_destroy(mosq1);
+    mosquitto_lib_cleanup();
+    return 0;
+}
+
+int InitMqtt(struct mosquitto *mosq1)
+{
+   
+    int version[3];
+    number = 1; // Init mesage number
+
+  
+
+
     mosquitto_connect_callback_set(mosq1, on_connect1);
-    mosquitto_message_callback_set(mosq1, on_message1);
+    //mosquitto_message_callback_set(mosq1, on_message1);
 
     mosquitto_connect(mosq1, "93.166.84.21", 1883, 60);  // Replace localhost with IP address of broker
 
-    mosquitto_loop_start(mosq1);
+    //mosquitto_loop_start(mosq1);
 
-    mosquitto_loop_forever(mosq1, -1, 1);
-
-    mosquitto_destroy(mosq1);
-
-
-    mosquitto_lib_cleanup();
+    //mosquitto_loop_forever(mosq1, -1, 1);
 
     return 0;
+   
 }
+
