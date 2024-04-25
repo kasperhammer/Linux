@@ -1,245 +1,263 @@
-
-# StartUpService.c Dokumentation
-## Formål
-Formålet med StartUpService.c-filen er at implementere et program, der starter op ved systemets opstart og kører i baggrunden som en daemon. Programmet opsætter og styrer tråde til at indsamle og opdatere tid og temperaturinformation, som derefter vises på en skærm. Derudover publiceres temperaturinformationen til en MQTT-broker.
-
-## Funktioner
-1. int BitPrint(int bits)
-Denne funktion udskriver en binær repræsentation af et heltal til konsollen. Det bruges til fejlfinding eller diagnosticering.
-
-2. void InterProlateAndPrint()
-Denne funktion kombinerer temperatur- og tidsinformation og viser den kombinerede streng på en skærm. Det opdaterer løbende skærmen med de seneste oplysninger.
-
-3. void *getTime(void *arg)
-Denne trådfunktion kontinuerligt indhenter den aktuelle tid og opdaterer en global variabel med tidsoplysningerne. Derefter kaldes InterProlateAndPrint() for at opdatere skærmen.
-
-4. void *getTemp(void *arg)
-Denne trådfunktion kontinuerligt indhenter den aktuelle temperatur og opdaterer en global variabel med temperaturoplysningerne. Derefter kaldes InterProlateAndPrint() for at opdatere skærmen.
-
-5. void *publishTemp(void *arg)
-Denne trådfunktion kontinuerligt offentliggør temperaturoplysningerne til en MQTT-broker.
-
-6. int main(void)
-Denne funktion er programmets indgangspunkt. Den initialiserer systemet, opretter trådene til tid, temperatur og MQTT-publicering, og afslutter derefter programmet.
-
-## Implementering af Daemon
-For at køre StartUpService.c som en daemon ved systemets opstart, kan du følge disse trin:
-
-Kompilér koden: Kompilér din StartUpService.c-fil til en eksekverbar fil. For eksempel kan du bruge GCC-kommandoen:
-
-```gcc StartUpService.c -o StartUpService -lpthread
-Kopier eksekverbar fil til bin-mappe: Kopier den kompilerede eksekverbare fil (StartUpService) til /usr/local/bin eller et andet passende sted.
-
-sudo cp StartUpService /usr/local/bin
-Opret en systemd-servicefil: Opret en systemd-servicefil (f.eks. startup.service) i /etc/systemd/system/-mappen med følgende indhold:
-plaintext
-
-[Unit]
-Description=Startup Service
-After=network.target
-
-[Service]
-Type=simple
-ExecStart=/usr/local/bin/StartUpService
-
-[Install]
-WantedBy=multi-user.target
-Genindlæs systemd-dæmoner: Genindlæs systemd-dæmonerne for at opdatere servicekonfigurationerne.
-
-sudo systemctl daemon-reload
-Aktivér og start servicen: Aktivér og start den nye service.
-
-sudo systemctl enable startup.service
-sudo systemctl start startup.service 
-```
-
-Nu vil StartUpService køre som en daemon ved systemets opstart og fortsætte med at køre i baggrunden, indsamle tid og temperaturinformation, opdatere skærmen og offentliggøre temperaturinformation til MQTT-brokeren.
-
-## Bemærkninger
-Sørg for at have de nødvendige tilladelser til at køre StartUpService som en daemon, og at alle afhængigheder er opfyldt.
-Du kan justere servicekonfigurationen efter behov, f.eks. for at angive en anden eksekverbar sti eller tilføje yderligere startparametre.
-
-# IpGet.c Dokumentation
-## Formål
-Formålet med IpGet.c-filen er at indeholde funktioner til at hente den lokale IP-adresse fra systemet. Dette er nyttigt, når du skal oprette forbindelse til en lokal netværksenhed eller når du har brug for at vide den lokale IP-adresse til andre formål.
-
-## Funktioner
-1. char *GetLocalIp()
-Denne funktion returnerer en streng, der repræsenterer den lokale IP-adresse for systemet. Funktionen opretter en socket, henter IP-adressen fra den ønskede netværksgrænseflade og formatterer derefter IP-adressen som en streng.
-
-## Implementering
-For at bruge IpGet.c i dit projekt skal du følge disse trin:
-
-Inkludér headerfilen: Tilføj følgende linje øverst i din kildefil for at inkludere IpGet.h:
-```
-#include "IpGet.h"
-Kald funktionen: Brug GetLocalIp()-funktionen i din kode, hvor du har brug for at hente den lokale IP-adresse. Eksempel:
-
-char *ipAddress = GetLocalIp();
-printf("Local IP Address: %s\n", ipAddress);
-free(ipAddress); // Husk at frigøre hukommelsen efter brug
-```
-Kompilér kildefilerne: Når du kompilerer dit projekt, skal du sikre dig, at IpGet.c er inkluderet i kommandoen.
-## Bemærkninger
-Funktionen GetLocalIp() kan returnere NULL, hvis der opstår en fejl under hentning af IP-adressen. Det anbefales at kontrollere for NULL-værdien, når du bruger funktionen for at undgå uønskede fejl.
-Sørg for at frigøre den allokerede hukommelse ved hjælp af free() efter brug af den returnerede streng for at undgå hukommelseslækager.
-
-# mqtt.c Dokumentation
-## Formål
-Formålet med mqtt.c-filen er at indeholde funktioner til at oprette forbindelse til en MQTT-broker, sende og modtage MQTT-beskeder og håndtere MQTT-forbindelseshændelser.
-
-## Funktioner
-1. void publish_message(struct mosquitto *mosq, const char *payload)
-Denne funktion bruges til at offentliggøre en besked til en MQTT-broker. Den tager en pointer til en mosquitto-struktur og en streng som input og offentliggør derefter beskeden til det angivne emne.
-
-2. void on_connect1(struct mosquitto *mosq, void *obj, int result)
-Denne funktion fungerer som en tilbagekaldsfunktion, der bliver kaldt, når der oprettes forbindelse til en MQTT-broker. Det kan anvendes til at foretage yderligere handlinger efter en succesfuld forbindelse.
-
-3. void on_message1(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
-Denne funktion fungerer som en tilbagekaldsfunktion, der bliver kaldt, når en ny besked modtages fra en MQTT-broker. Den modtager en pointer til en mosquitto_message struktur, der indeholder information om den modtagne besked, og kan anvendes til at behandle beskeden.
-
-4. struct mosquitto* GetMqtt()
-Denne funktion initialiserer en ny mosquitto-struktur og returnerer en pointer til den initialiserede struktur. Det er nødvendigt at kalde denne funktion, før du bruger andre MQTT-relaterede funktioner.
-
-5. int DestroyMQTT(struct mosquitto *mosq1)
-Denne funktion frigiver ressourcer, der er allokeret til en mosquitto-struktur. Det er vigtigt at kalde denne funktion, når MQTT-objektet ikke længere er i brug for at undgå hukommelseslækager.
-
-6. int InitMqtt(struct mosquitto *mosq1)
-Denne funktion initialiserer MQTT-forbindelsen ved at oprette forbindelse til en MQTT-broker med den angivne IP-adresse og portnummer.
-
-## Implementering
-For at bruge mqtt.c i dit projekt skal du følge disse trin:
-
-Inkludér headerfilen: Tilføj følgende linje øverst i din kildefil for at inkludere mqtt.h:
-
-```
-#include "mqtt.h"
-Initialiser MQTT: Brug GetMqtt()-funktionen til at initialisere en MQTT-struktur og InitMqtt()-funktionen til at oprette forbindelse til en MQTT-broker.
-
-
-struct mosquitto *mosq1 = GetMqtt();
-InitMqtt(mosq1);
-Brug MQTT-funktioner: Brug de forskellige MQTT-funktioner som f.eks. publish_message() til at interagere med MQTT-brokeren.
-Afslut MQTT-forbindelse: Når du er færdig med at bruge MQTT, skal du frigøre ressourcerne ved at kalde DestroyMQTT().
-
-
-DestroyMQTT(mosq1);
-```
-
-## Bemærkninger
-Før du bruger MQTT-funktionerne, skal du sørge for at have inkluderet mosquitto.h og have konfigureret dit projekt til at linke med Mosquitto-biblioteket.
-Det anbefales at håndtere eventuelle fejl, der kan opstå under MQTT-operationerne, for at sikre en robust applikation.
-
-# screen.c Dokumentation
-## Formål
-Formålet med screen.c-filen er at implementere funktioner til styring af en LCD-skærm via I2C-protokollen. Denne fil indeholder funktioner til at skrive tekst på skærmen og indstille baggrundsfarven på skærmbelysningen.
-
-## Funktioner
-1. void i2c_write_byte(int file, unsigned char reg, unsigned char value)
-Denne funktion skriver en byte til en bestemt registreringsadresse på en I2C-enhed. Det bruges til at sende kommandoer og data til LCD-skærmen.
-
-2. void write_string_to_lcd(int file, const char *str)
-Denne funktion skriver en streng til LCD-skærmen. Hvis strengen er længere end 16 tegn, skifter den til næste linje automatisk.
-
-3. void SetScreen(char *inputString)
-Denne funktion initialiserer LCD-skærmen og viser en given streng på skærmen. Det bruges til at starte skærmen og vise en initial besked.
-
-4. void SetColor(int color)
-Denne funktion indstiller farven på LCD-skærmens baggrundsbelysning baseret på den modtagne farveparameter. Farvevalg inkluderer blå, grøn, rød eller ingen farve.
-
-5. void InitScreen()
-Denne funktion initialiserer LCD-skærmens indstillinger, så den er klar til brug. Det opsætter skærmens grundlæggende konfigurationer som to-linje-tilstand, blinkkontrol osv.
-
-6. void WriteTopLine(char *str)
-Denne funktion skriver en streng til LCD-skærmens øverste linje.
-
-7. void WriteBottomLine(char *str)
-Denne funktion skriver en streng til LCD-skærmens nederste linje.
-
-## Implementering
-For at bruge funktionerne i screen.c-filen skal du følge disse trin:
-
-Inkludér headerfilen: I din hovedfil eller det relevante program, inkluder screen.h-headerfilen.
- ```
-#include "screen.h"
-Initialisér skærmen: Kald InitScreen()-funktionen for at initialisere LCD-skærmen.
-
-InitScreen();
-Skriver tekst på skærmen: Brug write_string_to_lcd()-funktionen til at skrive tekst på skærmen.
-
-write_string_to_lcd(file, "Hello, World!");
-Indstil baggrundsfarve: Brug SetColor()-funktionen til at indstille baggrundsfarven på skærmbelysningen.
-
-SetColor(0); // Blå baggrund
-Vis på skærmen: Brug WriteTopLine() og WriteBottomLine() til at skrive tekst på henholdsvis øverste og nederste linje af skærmen.
-
-WriteTopLine("Temperature:");
-WriteBottomLine("25°C"); 
-```
-## Bemærkninger
-Sørg for at have de nødvendige tilladelser til at bruge I2C-bussen, og at skærmen er tilsluttet korrekt til din enhed.
-Funktionerne i screen.c-filen kan tilpasses efter behov, f.eks. for at ændre skærmens konfigurationer eller tilføje yderligere visningsmuligheder.
-
-# temp.c Dokumentation
-Formål
-Formålet med temp.c-filen er at implementere funktioner til at interagere med en MCP9808 digital temperatursensor via I2C-protokollen. Denne fil indeholder funktioner til initialisering af sensoren og aflæsning af den aktuelle temperatur.
-
-## Funktioner
-1. int i2c_init(char *bus, unsigned int address)
-Denne funktion initialiserer kommunikationen med en I2C-enhed ved at åbne den tilsvarende I2C-bus og sætte enhedens adresse. Den returnerer en filbeskrivelse, som bruges til at kommunikere med enheden.
-
-2. int init()
-Denne funktion initialiserer MCP9808-temperaturens sensorenhed og returnerer den aktuelle temperatur som en flydende punktværdi i Celsius.
-
-3. char* GetTemp()
-Denne funktion returnerer den aktuelle temperatur som en streng.
-
-## Implementering
-For at bruge funktionerne i temp.c-filen skal du følge disse trin:
-
-Inkludér nødvendige headerfiler: I din hovedfil eller det relevante program, inkluder temp.h-headerfilen.
-```
-#include "temp.h"
-Initialisér sensor: Kald init()-funktionen for at initialisere MCP9808-sensoren og få den aktuelle temperatur.
-
-double temperature = init();
-Aflæs temperatur: Brug GetTemp()-funktionen til at få den aktuelle temperatur som en streng.
-
-char *temperatureString = GetTemp();
-```
-
-## Bemærkninger
-Sørg for at have de nødvendige tilladelser til at bruge I2C-bussen, og at sensoren er tilsluttet korrekt til din enhed.
-Funktionerne i temp.c-filen kan tilpasses efter behov, f.eks. for at ændre sensorens konfigurationer eller tilføje yderligere funktionalitet.
-
-# TimeGet.c Dokumentation
-## Formål
-Formålet med TimeGet.c-filen er at implementere funktioner til at hente den aktuelle tid i timer og minutterformat. Dette er nyttigt i situationer, hvor applikationen har brug for at arbejde med tidsstempeldata.
-
-## Funktioner
-1. int getHour()
-Denne funktion returnerer den aktuelle time som en heltalsværdi.
-
-2. int getMin()
-Denne funktion returnerer den aktuelle minut som en heltalsværdi.
-
-3. char* GetTime(int collon)
-Denne funktion returnerer den aktuelle tid i formatet "HH:MM" eller "HH MM", afhængigt af værdien af parameteren collon. Den returnerede streng indeholder tidspunktet som en tegnstreng.
-
-## Implementering
-For at bruge funktionerne i TimeGet.c-filen skal du følge disse trin:
-
-Inkludér nødvendige headerfiler: I din hovedfil eller det relevante program, inkluder TimeGet.h-headerfilen.
-```
-#include "TimeGet.h"
-Hent time og minut: Brug getHour() og getMin()-funktionerne til at hente den aktuelle time og minut.
-
-int currentHour = getHour();
-int currentMin = getMin();
-Hent tid som streng: Brug GetTime()-funktionen til at få den aktuelle tid som en streng.
-
-char *timeString = GetTime(1); // Returnerer tid i formatet "HH MM" ```
-
-## Bemærkninger
-Funktionerne i TimeGet.c-filen returnerer tidspunkter baseret på den lokale tidszone.
-GetTime()-funktionen giver mulighed for at vælge mellem to formater for tidspunktet ved at angive værdien af collon-parameteren (0 for "HH:MM" og 1 for "HH MM").
+# StartUpService.c Documentation
+## Purpose
+The purpose of the StartUpService.c file is to implement a program that starts up during system boot and runs in the background as a daemon. The program sets up and manages threads to collect and update time and temperature information, which is then displayed on a screen. Additionally, the temperature information is published to an MQTT broker.
+
+## Functions
+1. `int BitPrint(int bits)`
+   This function prints a binary representation of an integer to the console. It is used for debugging or diagnostics.
+
+2. `void InterpolateAndPrint()`
+   This function combines temperature and time information and displays the combined string on a screen. It continuously updates the screen with the latest information.
+
+3. `void *getTime(void *arg)`
+   This thread function continuously retrieves the current time and updates a global variable with the time information. Then, it calls `InterpolateAndPrint()` to update the screen.
+
+4. `void *getTemp(void *arg)`
+   This thread function continuously retrieves the current temperature and updates a global variable with the temperature information. Then, it calls `InterpolateAndPrint()` to update the screen.
+
+5. `void *publishTemp(void *arg)`
+   This thread function continuously publishes the temperature information to an MQTT broker.
+
+6. `int main(void)`
+   This function is the entry point of the program. It initializes the system, creates threads for time, temperature, and MQTT publishing, and then exits the program.
+
+## Daemon Implementation
+To run StartUpService.c as a daemon during system boot, follow these steps:
+
+Compile the code: Compile your StartUpService.c file into an executable file. For example, you can use the GCC command:
+   ```bash
+   gcc StartUpService.c -o StartUpService -lpthread
+   ```
+   Copy the executable file to the bin directory: Copy the compiled executable file (StartUpService) to /usr/local/bin or another appropriate location.
+   ```bash
+   sudo cp StartUpService /usr/local/bin
+   ```
+   Create a systemd service file: Create a systemd service file (e.g., startup.service) in the /etc/systemd/system/ directory with the following content:
+   ```plaintext
+   [Unit]
+   Description=Startup Service
+   After=network.target
+
+   [Service]
+   Type=simple
+   ExecStart=/usr/local/bin/StartUpService
+
+   [Install]
+   WantedBy=multi-user.target
+   ```
+   Reload systemd daemons: Reload systemd daemons to update the service configurations.
+   ```bash
+   sudo systemctl daemon-reload
+   ```
+   Enable and start the service: Enable and start the new service.
+   ```bash
+   sudo systemctl enable startup.service
+   sudo systemctl start startup.service
+   ```
+
+Now, StartUpService will run as a daemon during system boot and continue to run in the background, collecting time and temperature information, updating the screen, and publishing temperature information to the MQTT broker.
+
+## Notes
+Ensure you have the necessary permissions to run StartUpService as a daemon, and all dependencies are met.
+You can adjust the service configuration as needed, such as specifying a different executable path or adding additional startup parameters.
+
+# IpGet.c Documentation
+## Purpose
+The purpose of the IpGet.c file is to contain functions for retrieving the local IP address from the system. This is useful when connecting to a local network device or when needing to know the local IP address for other purposes.
+
+## Functions
+1. `char *GetLocalIp()`
+   This function returns a string representing the local IP address of the system. The function creates a socket, retrieves the IP address from the desired network interface, and then formats the IP address as a string.
+
+## Implementation
+To use IpGet.c in your project, follow these steps:
+
+Include the header file: Add the following line at the top of your source file to include IpGet.h:
+   ```c
+   #include "IpGet.h"
+   ```
+   Call the function: Use the `GetLocalIp()` function in your code where you need to retrieve the local IP address. Example:
+   ```c
+   char *ipAddress = GetLocalIp();
+   printf("Local IP Address: %s\n", ipAddress);
+   free(ipAddress); // Remember to free the memory after use
+   ```
+   Compile the source files: When compiling your project, make sure IpGet.c is included in the command.
+
+## Notes
+The `GetLocalIp()` function may return NULL if an error occurs while retrieving the IP address. It is recommended to check for the NULL value when using the function to avoid unwanted errors.
+Ensure to free the allocated memory using `free()` after using the returned string to avoid memory leaks.
+
+# mqtt.c Documentation
+## Purpose
+The purpose of the mqtt.c file is to contain functions for connecting to an MQTT broker, sending and receiving MQTT messages, and handling MQTT connection events.
+
+## Functions
+1. `void publish_message(struct mosquitto *mosq, const char *payload)`
+   This function is used to publish a message to an MQTT broker. It takes a pointer to a mosquitto structure and a string as input and then publishes the message to the specified topic.
+
+2. `void on_connect1(struct mosquitto *mosq, void *obj, int result)`
+   This function serves as a callback function called when connecting to an MQTT broker. It can be used to perform additional actions after a successful connection.
+
+3. `void on_message1(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)`
+   This function serves as a callback function called when a new message is received from an MQTT broker. It receives a pointer to a mosquitto_message structure containing information about the received message and can be used to handle the message.
+
+4. `struct mosquitto* GetMqtt()`
+   This function initializes a new mosquitto structure and returns a pointer to the initialized structure. It is necessary to call this function before using other MQTT-related functions.
+
+5. `int DestroyMQTT(struct mosquitto *mosq1)`
+   This function releases resources allocated to a mosquitto structure. It is important to call this function when the MQTT object is no longer in use to avoid memory leaks.
+
+6. `int InitMqtt(struct mosquitto *mosq1)`
+   This function initializes the MQTT connection by connecting to an MQTT broker with the specified IP address and port number.
+
+## Implementation
+To use mqtt.c in your project, follow these steps:
+
+Include the header file: Add the following line at the top of your source file to include mqtt.h:
+   ```c
+   #include "mqtt.h"
+   ```
+   Initialize MQTT: Use the `GetMqtt()` function to initialize an MQTT structure and the `InitMqtt()` function to connect to an MQTT broker.
+   ```c
+   struct mosquitto *mosq1 = GetMqtt();
+   InitMqtt(mosq1);
+   ```
+   Use MQTT functions: Use the various MQTT functions such as `publish_message()` to interact with the MQTT broker.
+   ```c
+   publish_message(mosq1, "Hello, MQTT!");
+   ```
+   End MQTT connection: When finished using MQTT, release the resources by calling `DestroyMQTT()`.
+   ```c
+   DestroyMQTT(mosq1);
+   ```
+
+## Notes
+Before using MQTT functions, ensure you have included mosquitto.h and configured your project to
+
+ link with the Mosquitto library.
+It is recommended to handle any errors that may occur during MQTT operations to ensure a robust application.
+
+# screen.c Documentation
+## Purpose
+The purpose of the screen.c file is to implement functions for controlling an LCD screen via the I2C protocol. This file contains functions for writing text on the screen and setting the background color of the screen backlight.
+
+## Functions
+1. `void i2c_write_byte(int file, unsigned char reg, unsigned char value)`
+   This function writes a byte to a specific register address on an I2C device. It is used to send commands and data to the LCD screen.
+
+2. `void write_string_to_lcd(int file, const char *str)`
+   This function writes a string to the LCD screen. If the string is longer than 16 characters, it automatically switches to the next line.
+
+3. `void SetScreen(char *inputString)`
+   This function initializes the LCD screen and displays a given string on the screen. It is used to start the screen and display an initial message.
+
+4. `void SetColor(int color)`
+   This function sets the color of the LCD screen backlight based on the received color parameter. Color options include blue, green, red, or no color.
+
+5. `void InitScreen()`
+   This function initializes the settings of the LCD screen, making it ready for use. It sets up the basic configurations of the screen such as two-line mode, blink control, etc.
+
+6. `void WriteTopLine(char *str)`
+   This function writes a string to the top line of the LCD screen.
+
+7. `void WriteBottomLine(char *str)`
+   This function writes a string to the bottom line of the LCD screen.
+
+## Implementation
+To use the functions in screen.c, follow these steps:
+
+Include the header file: In your main file or the relevant program, include the screen.h header file.
+   ```c
+   #include "screen.h"
+   ```
+   Initialize the screen: Call the `InitScreen()` function to initialize the LCD screen.
+   ```c
+   InitScreen();
+   ```
+   Write text on the screen: Use the `write_string_to_lcd()` function to write text on the screen.
+   ```c
+   write_string_to_lcd(file, "Hello, World!");
+   ```
+   Set the background color: Use the `SetColor()` function to set the background color of the screen backlight.
+   ```c
+   SetColor(0); // Blue background
+   ```
+   Display on the screen: Use `WriteTopLine()` and `WriteBottomLine()` to write text on the top and bottom lines of the screen, respectively.
+   ```c
+   WriteTopLine("Temperature:");
+   WriteBottomLine("25°C");
+   ```
+
+## Notes
+Ensure you have the necessary permissions to use the I2C bus, and the screen is correctly connected to your device.
+The functions in screen.c can be customized as needed, such as changing the screen's configurations or adding additional display options.
+
+# temp.c Documentation
+## Purpose
+The purpose of the temp.c file is to implement functions to interact with an MCP9808 digital temperature sensor via the I2C protocol. This file contains functions for sensor initialization and reading the current temperature.
+
+## Functions
+1. `int i2c_init(char *bus, unsigned int address)`
+   This function initializes communication with an I2C device by opening the corresponding I2C bus and setting the device's address. It returns a file descriptor used to communicate with the device.
+
+2. `int init()`
+   This function initializes the MCP9808 temperature sensor unit and returns the current temperature as a floating-point value in Celsius.
+
+3. `char* GetTemp()`
+   This function returns the current temperature as a string.
+
+## Implementation
+To use the functions in temp.c, follow these steps:
+
+Include necessary header files: In your main file or the relevant program, include the temp.h header file.
+   ```c
+   #include "temp.h"
+   ```
+   Initialize the sensor: Call the `init()` function to initialize the MCP9808 sensor and get the current temperature.
+   ```c
+   double temperature = init();
+   ```
+   Read the temperature: Use the `GetTemp()` function to get the current temperature as a string.
+   ```c
+   char *temperatureString = GetTemp();
+   ```
+
+## Notes
+Ensure you have the necessary permissions to use the I2C bus, and the sensor is correctly connected to your device.
+The functions in temp.c can be customized as needed, such as changing the sensor's configurations or adding additional functionality.
+
+# TimeGet.c Documentation
+## Purpose
+The purpose of the TimeGet.c file is to implement functions to retrieve the current time in hour and minute format. This is useful in situations where the application needs to work with timestamp data.
+
+## Functions
+1. `int getHour()`
+   This function returns the current hour as an integer value.
+
+2. `int getMin()`
+   This function returns the current minute as an integer value.
+
+3. `char* GetTime(int colon)`
+   This function returns the current time in the format "HH:MM" or "HH MM" depending on the value of the colon parameter. The returned string contains the time as a character string.
+
+## Implementation
+To use the functions in TimeGet.c, follow these steps:
+
+Include necessary header files: In your main file or the relevant program, include the TimeGet.h header file.
+   ```c
+   #include "TimeGet.h"
+   ```
+   Get hour and minute: Use the `getHour()` and `getMin()` functions to retrieve the current hour and minute.
+   ```c
+   int currentHour = getHour();
+   int currentMin = getMin();
+   ```
+   Get time as string: Use the `GetTime()` function to get the current time as a string.
+   ```c
+   char *timeString = GetTime(1); // Returns time in the format "HH MM"
+   ```
+
+## Notes
+The functions in TimeGet.c return timestamps based on the local time zone.
+The `GetTime()` function allows choosing between two formats for the timestamp by specifying the value of the colon parameter (0 for "HH:MM" and 1 for "HH MM").
