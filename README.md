@@ -182,7 +182,7 @@ Funktionerne i screen.c-filen kan tilpasses efter behov, f.eks. for at ændre sk
 Formål
 Formålet med temp.c-filen er at implementere funktioner til at interagere med en MCP9808 digital temperatursensor via I2C-protokollen. Denne fil indeholder funktioner til initialisering af sensoren og aflæsning af den aktuelle temperatur.
 
-##Funktioner
+## Funktioner
 1. int i2c_init(char *bus, unsigned int address)
 Denne funktion initialiserer kommunikationen med en I2C-enhed ved at åbne den tilsvarende I2C-bus og sætte enhedens adresse. Den returnerer en filbeskrivelse, som bruges til at kommunikere med enheden.
 
